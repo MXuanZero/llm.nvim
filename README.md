@@ -553,3 +553,7 @@ https://github.com/Kurama622/.lazyvim/blob/main/lua/plugins/llm.lua
     },
   }
 ```
+
+## Thanks
+Thanks for the original project [Kurama622/llm.nvim](https://github.com/Kurama622/llm.nvim).
+
