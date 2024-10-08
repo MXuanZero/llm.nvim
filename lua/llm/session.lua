@@ -46,6 +46,38 @@ function M.LLMSelectedTextHandler(description)
   end
 end
 
+function M.LLMTranslateTextHandler(description)
+  local content = description .. ":\n" .. F.GetVisualSelectionAccurate()
+  state.popwin = _popup(conf.configs.popwin_opts)
+  state.popwin:mount()
+  state.session[state.popwin.winid] = {}
+  table.insert(state.session[state.popwin.winid], { role = "user", content = content })
+
+  vim.api.nvim_set_option_value("filetype", "markdown", { buf = state.popwin.bufnr })
+  vim.api.nvim_set_option_value("buftype", "nofile", { buf = state.popwin.bufnr })
+  vim.api.nvim_set_option_value("spell", false, { win = state.popwin.winid })
+  vim.api.nvim_set_option_value("wrap", true, { win = state.popwin.winid })
+  vim.api.nvim_set_option_value("linebreak", false, { win = state.popwin.winid })
+  state.llm.worker =
+    streaming.GetStreamingOutput(state.popwin.bufnr, state.popwin.winid, state.session[state.popwin.winid])
+
+  for k, v in pairs(conf.configs.keys) do
+    if k == "Session:Close" then
+      F.WinMapping(state.popwin, v.mode, v.key, function()
+        if state.llm.worker.job then
+          state.llm.worker.job:shutdown()
+          print("Suspend output...")
+          vim.wait(200, function() end)
+          state.llm.worker.job = nil
+        end
+        state.popwin:unmount()
+      end, { noremap = true })
+    elseif k == "Output:Cancel" then
+      F.WinMapping(state.popwin, v.mode, v.key, F.CancelLLM, { noremap = true, silent = true })
+    end
+  end
+end
+
 function M.NewSession()
   if conf.session.status == -1 then
     local bufnr = vim.api.nvim_win_get_buf(0)

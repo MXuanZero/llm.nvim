@@ -6,6 +6,10 @@ vim.api.nvim_create_user_command("LLMSelectedTextHandler", function(args)
   require("llm.session").LLMSelectedTextHandler(args.fargs[1])
 end, { nargs = 1 })
 
+vim.api.nvim_create_user_command("LLMTranslateTextHandler", function(args)
+  require("llm.session").LLMTranslateTextHandler(args.fargs[1])
+end, { nargs = 1 })
+
 vim.api.nvim_create_user_command("LLMAppHandler", function(args)
   require("llm.app").LLMAppHandler(args.fargs[1])
 end, { nargs = 1 })

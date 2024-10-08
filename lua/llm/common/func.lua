@@ -127,6 +127,29 @@ function M.GetVisualSelection()
   return seletion
 end
 
+function M.GetVisualSelectionAccurate()
+  local s_start, s_end
+  local line_cur = vim.fn.getpos(".") -- 开始位置
+  local line_v = vim.fn.getpos("v")   -- 光标位置
+  local n_lines = math.abs(line_v[2] - line_cur[2]) + 1
+  if (n_lines == 1 and line_cur[3] > line_v[3]) or line_cur[2] > line_v[2] then
+    s_start = line_v
+    s_end = line_cur
+  else
+    s_start = line_cur
+    s_end = line_v
+  end
+
+  local lines = vim.api.nvim_buf_get_lines(0, s_start[2] - 1, s_end[2], false)
+  lines[1] = string.sub(lines[1], s_start[3], -1)
+  if n_lines == 1 then
+    lines[n_lines] = string.sub(lines[n_lines], 1, s_end[3] - s_start[3] + 1)
+  else
+    lines[n_lines] = string.sub(lines[n_lines], 1, s_end[3])
+  end
+  return table.concat(lines, '\n')
+end
+
 function M.CancelLLM()
   if state.llm.worker.job then
     state.llm.worker.job:shutdown()
@@ -149,7 +172,7 @@ function M.CloseLLM()
       filename = string.format("%s/%s", conf.configs.history_path, state.session.filename)
     else
       local _filename =
-        utf8_sub(state.session[state.session.filename][2].content, 1, conf.configs.max_history_name_length)
+          utf8_sub(state.session[state.session.filename][2].content, 1, conf.configs.max_history_name_length)
       filename = string.format("%s/%s-%s.json", conf.configs.history_path, _filename, os.date("%Y%m%d%H%M%S"))
     end
     local file = io.open(filename, "w")
